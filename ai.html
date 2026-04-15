@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <div style="margin-top: 20px;">
+    <a href="fromscratch.html" style="color: #6f4e37; font-weight: bold; text-decoration: none; border: 1px solid #6f4e37; padding: 10px 20px; border-radius: 5px;">
+        ← Back to Scratch Page
+    </a>
+</div>
+    <meta charset="UTF-8">
+    <title>Portugal Word Puzzle</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #F8EAD6;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        .game-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 30px;
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(8, 40px);
+            gap: 5px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            user-select: none;
+        }
+
+        .cell.selected {
+            background-color: rgb(225, 243, 231);
+        }
+
+        .cell.correct {
+            background-color: rgba(144, 238, 144, 0.556);
+        }
+
+        .word-list {
+            text-align: left;
+        }
+
+        .word-list li {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Portugal Word Puzzle</h1>
+
+<div class="game-container">
+
+    <div id="grid"></div>
+
+    <div class="word-list">
+        <h3>Find these words:</h3>
+        <ul id="words">
+            <li data-word="LISBON">LISBON</li>
+            <li data-word="PORTO">PORTO</li>
+            <li data-word="ALGARVE">ALGARVE</li>
+            <li data-word="FADO">FADO</li>
+        </ul>
+    </div>
+
+</div>
+
+<script>
+const gridData = [
+    ["L","I","S","B","O","N","A","B"],
+    ["A","B","C","D","E","F","G","H"],
+    ["P","O","R","T","O","A","B","C"],
+    ["D","E","F","G","H","I","J","K"],
+    ["A","L","G","A","R","V","E","A"],
+    ["B","C","D","E","F","G","H","I"],
+    ["F","A","D","O","B","C","D","E"],
+    ["A","B","C","D","E","F","G","H"]
+];
+
+const words = ["LISBON", "PORTO", "ALGARVE", "FADO"];
+
+let selected = "";
+let foundWords = [];
+
+const grid = document.getElementById("grid");
+
+// build grid
+function renderGrid() {
+    grid.innerHTML = "";
+
+    gridData.forEach(row => {
+        row.forEach(letter => {
+
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.textContent = letter;
+
+            cell.addEventListener("click", () => {
+
+                if (foundWords.length === words.length) return;
+
+                cell.classList.add("selected");
+                selected += letter;
+
+                checkWord();
+            });
+
+            grid.appendChild(cell);
+        });
+    });
+}
+
+// check word
+function checkWord() {
+    if (foundWords.includes(selected)) {
+        selected = "";
+        return;
+    }
+
+    words.forEach(word => {
+        if (selected === word && !foundWords.includes(word)) {
+            foundWords.push(word);
+            markWord(word);
+        }
+    });
+}
+
+// highlight + cross off
+function markWord(word) {
+
+    document.querySelectorAll("#words li").forEach(li => {
+        if (li.dataset.word === word) {
+            li.style.textDecoration = "line-through";
+            li.style.color = "green";
+        }
+    });
+
+    document.querySelectorAll(".cell").forEach(cell => {
+        if (word.includes(cell.textContent)) {
+            cell.classList.add("correct");
+        }
+    });
+
+    selected = "";
+}
+
+// start game
+renderGrid();
+</script>
+
+</body>
+</html>
