@@ -1,171 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <div style="margin-top: 20px;">
-    <a href="fromscratch.html" style="color: #6f4e37; font-weight: bold; text-decoration: none; border: 1px solid #6f4e37; padding: 10px 20px; border-radius: 5px;">
+     <div style="margin-top: 20px;">
+    <a href="fromscratch.html" style="color: #6f4e37; font-weight: bold; text-decoration: none; border: none #6f4e37; padding: 10px 20px; border-radius: 5px;">
         ← Back to Scratch Page
     </a>
 </div>
-    <meta charset="UTF-8">
-    <title>Portugal Word Puzzle</title>
+<meta charset="UTF-8" />
+<title>Portugal Word Search</title>
 
-    <style>
-        body {
-            font-family: Arial;
-            background-color: #F8EAD6;
-            text-align: center;
-        }
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f3e7d3; /* tan */
+        display: flex;
+        justify-content: center;
+        padding-top: 40px;
+    }
 
-        h1 {
-            margin-top: 20px;
-        }
+    .container {
+        display: flex;
+        gap: 40px;
+    }
 
-        .game-container {
-            display: flex;
-            justify-content: center;
-            gap: 50px;
-            margin-top: 30px;
-        }
+    /* GRID */
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 40px);
+        gap: 3px;
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+    }
 
-        #grid {
-            display: grid;
-            grid-template-columns: repeat(8, 40px);
-            gap: 5px;
-        }
+    .cell {
+        width: 40px;
+        height: 40px;
+        background: #fffdf8;
+        border: 1px solid #cbb89d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+    }
 
-        .cell {
-            width: 40px;
-            height: 40px;
-            background-color: rgba(255,255,255,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            user-select: none;
-        }
+    .cell.selected {
+        background: #ffe7a3;
+    }
 
-        .cell.selected {
-            background-color: rgb(225, 243, 231);
-        }
+    .cell.found {
+        background: #b7f7b7;
+        cursor: default;
+    }
 
-        .cell.correct {
-            background-color: rgba(144, 238, 144, 0.556);
-        }
+    /* SIDE PANEL */
+    .panel {
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        width: 200px;
+    }
 
-        .word-list {
-            text-align: left;
-        }
+    .word {
+        padding: 5px 0;
+        font-size: 18px;
+    }
 
-        .word-list li {
-            font-size: 18px;
-            margin: 5px 0;
-        }
-    </style>
+    .word.done {
+        text-decoration: line-through;
+        color: green;
+    }
+
+    button {
+        margin-top: 10px;
+        padding: 8px;
+        width: 100%;
+        border: none;
+        background: #c9a46a;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 6px;
+    }
+
+    button:hover {
+        background: #b89055;
+    }
+</style>
 </head>
 
 <body>
 
-<h1>Portugal Word Puzzle</h1>
+<div class="container">
 
-<div class="game-container">
+    <div id="grid" class="grid"></div>
 
-    <div id="grid"></div>
-
-    <div class="word-list">
-        <h3>Find these words:</h3>
-        <ul id="words">
-            <li data-word="LISBON">LISBON</li>
-            <li data-word="PORTO">PORTO</li>
-            <li data-word="ALGARVE">ALGARVE</li>
-            <li data-word="FADO">FADO</li>
-        </ul>
+    <div class="panel">
+        <h3>Portugal Words</h3>
+        <div id="wordList"></div>
+        <button onclick="checkWord()">Check Word</button>
     </div>
 
 </div>
 
 <script>
-const gridData = [
-    ["L","I","S","B","O","N","A","B"],
-    ["A","B","C","D","E","F","G","H"],
-    ["P","O","R","T","O","A","B","C"],
-    ["D","E","F","G","H","I","J","K"],
-    ["A","L","G","A","R","V","E","A"],
-    ["B","C","D","E","F","G","H","I"],
-    ["F","A","D","O","B","C","D","E"],
-    ["A","B","C","D","E","F","G","H"]
+const size = 12;
+
+// WORDS (Portugal theme)
+const words = [
+    "PORTO",
+    "LISBON",
+    "SINTRA",
+    "FADO",
+    "TAGUS",
+    "ALGARVE"
 ];
 
-const words = ["LISBON", "PORTO", "ALGARVE", "FADO"];
+// 12x12 base grid (we will place words manually)
+let grid = Array.from({ length: size }, () =>
+    Array.from({ length: size }, () =>
+        String.fromCharCode(65 + Math.floor(Math.random() * 26))
+    )
+);
 
-let selected = "";
-let foundWords = [];
-
-const grid = document.getElementById("grid");
-
-// build grid
-function renderGrid() {
-    grid.innerHTML = "";
-
-    gridData.forEach(row => {
-        row.forEach(letter => {
-
-            const cell = document.createElement("div");
-            cell.classList.add("cell");
-            cell.textContent = letter;
-
-            cell.addEventListener("click", () => {
-
-                if (foundWords.length === words.length) return;
-
-                cell.classList.add("selected");
-                selected += letter;
-
-                checkWord();
-            });
-
-            grid.appendChild(cell);
-        });
-    });
+// PLACE WORDS (horizontal only for simplicity)
+function placeWord(word, row, col) {
+    for (let i = 0; i < word.length; i++) {
+        grid[row][col + i] = word[i];
+    }
 }
 
-// check word
+placeWord("PORTO", 0, 0);
+placeWord("LISBON", 2, 0);
+placeWord("SINTRA", 4, 0);
+placeWord("FADO", 6, 0);
+placeWord("TAGUS", 8, 0);
+placeWord("ALGARVE", 10, 0);
+
+// BUILD GRID UI
+const gridEl = document.getElementById("grid");
+let cellElements = [];
+
+for (let r = 0; r < size; r++) {
+    cellElements[r] = [];
+    for (let c = 0; c < size; c++) {
+
+        const div = document.createElement("div");
+        div.classList.add("cell");
+        div.textContent = grid[r][c];
+
+        div.dataset.row = r;
+        div.dataset.col = c;
+
+        div.addEventListener("click", () => {
+            if (div.classList.contains("found")) return;
+            div.classList.toggle("selected");
+        });
+
+        gridEl.appendChild(div);
+        cellElements[r][c] = div;
+    }
+}
+
+// WORD LIST UI
+const wordList = document.getElementById("wordList");
+
+words.forEach(w => {
+    const div = document.createElement("div");
+    div.classList.add("word");
+    div.textContent = w;
+    div.id = "word-" + w;
+    wordList.appendChild(div);
+});
+
+// CHECK FUNCTION
 function checkWord() {
-    if (foundWords.includes(selected)) {
-        selected = "";
-        return;
+    let selectedCells = document.querySelectorAll(".cell.selected");
+
+    if (selectedCells.length < 2) return;
+
+    let word = "";
+    let coords = [];
+
+    selectedCells.forEach(cell => {
+        word += cell.textContent;
+        coords.push(cell);
+    });
+
+    let reversed = word.split("").reverse().join("");
+
+    if (words.includes(word) || words.includes(reversed)) {
+
+        let matchedWord = words.includes(word) ? word : reversed;
+
+        // lock cells
+        coords.forEach(c => {
+            c.classList.remove("selected");
+            c.classList.add("found");
+        });
+
+        // mark word done
+        document.getElementById("word-" + matchedWord).classList.add("done");
     }
 
-    words.forEach(word => {
-        if (selected === word && !foundWords.includes(word)) {
-            foundWords.push(word);
-            markWord(word);
-        }
-    });
+    // clear selection either way
+    selectedCells.forEach(c => c.classList.remove("selected"));
 }
-
-// highlight + cross off
-function markWord(word) {
-
-    document.querySelectorAll("#words li").forEach(li => {
-        if (li.dataset.word === word) {
-            li.style.textDecoration = "line-through";
-            li.style.color = "green";
-        }
-    });
-
-    document.querySelectorAll(".cell").forEach(cell => {
-        if (word.includes(cell.textContent)) {
-            cell.classList.add("correct");
-        }
-    });
-
-    selected = "";
-}
-
-// start game
-renderGrid();
 </script>
 
 </body>
